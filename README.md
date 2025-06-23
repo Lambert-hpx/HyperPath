@@ -1,6 +1,6 @@
 # HyperPath
 
-This is the official code for the paper "HyperPath: Knowledge-Guided Hyperbolic Semantic Hierarchy Modeling for WSI Analysis (MICCAI 2025 Early Accept)".
+This is the official code for the paper ["HyperPath: Knowledge-Guided Hyperbolic Semantic Hierarchy Modeling for WSI Analysis (MICCAI 2025 Early Accept)"](https://www.arxiv.org/abs/2506.16398).
 
 ![Model Structure](./fig/framework.jpg)
 

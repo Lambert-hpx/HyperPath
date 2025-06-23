@@ -4,41 +4,15 @@ from utils.utils import *
 import os
 from datasets.dataset_generic import save_splits
 from models.model_mil import MIL_fc, MIL_fc_mc
-from models.model_clam import CLAM_MB, CLAM_SB
+
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import roc_auc_score, roc_curve, f1_score
 from sklearn.metrics import auc as calc_auc
-# from models.tcformer import tcformer
-from models.tnt import HIT
-from models.transmil import TransMIL
-# from models.tnt import TNT
-# from models.model_dsmil import FCLayer, BClassifier, MILNet
-from models.model_hierarchical_mil import HIPT_None_FC, HIPT_LGP_FC
-# from models.vmamba import VSSM
-# from models.conch_prompt import VSSM
-# from models.PAM_IB import VSSM
-from models.dtfdmil import DTFD_MIL
-# from models.s4 import S4Model
-# from models.model_rrt import RRTMIL
-from models.abmil import DAttention
+
 from models.hypermil import HyperMIL
-# from models.wikg import WiKG
-# from models.catemil import CATEMIL
-# from models.catemil_pathgenclip import CATEMIL_PathGenClip
-from models.ilra import ILRA
-from models.acmil import ACMIL_GA
-# from models.catemil2 import CATEMILv2
-# from models.catemil_quilt import CATEMIL_Quilt
-# from models.catemil_plip import CATEMIL_PLIP
-# from models.model_rrt import RRTMIL
-# from models.mi_estimator import CLUB
-# from models.rrt import RRTMIL
-# from tqdm import tqdm
+
 import time
 
-# import wandb
-
-# from torchstat import stat
 from torchsummary import summary
 
 class Accuracy_Logger(object):
@@ -141,11 +115,7 @@ def train(datasets, cur, args):
         writer = None
 
     train_split, val_split, test_split, out_test_split = datasets
-    ###!!!!!!
-    # val_split = test_split
-    # out_test_split = test_split
-    ###!!!!!!
-    # save_splits(datasets, ['train', 'val', 'test'], os.path.join(args.results_dir, 'splits_{}.csv'.format(cur)))
+
     print("Training on {} samples".format(len(train_split)))
     print("Validating on {} samples".format(len(val_split)))
     print("Testing on {} samples".format(len(test_split)))
@@ -165,78 +135,21 @@ def train(datasets, cur, args):
         model_dict.update({"size_arg": args.model_size})
     
     # Init model
-    if args.model_type in ['clam_sb', 'clam_mb', 'hit', 'dsmil', 'mamba', 'transmil', 'dtfdmil', 's4', 'abmil', 'rrt', 'hypermil','catemil', 'catemilv2', 'catemil_quilt', 'catemil_plip', 'catemil_pathgenclip', 'ilra', 'wikg', 'acmil']:
+    if args.model_type in ['abmil', 'hypermil']:
         if args.subtyping:
             model_dict.update({'subtyping': True})
         
         if args.B > 0:
             model_dict.update({'k_sample': args.B})
         
-        # if args.inst_loss == 'svm':
-        #     from topk.svm import SmoothTop1SVM
-        #     instance_loss_fn = SmoothTop1SVM(n_classes = 2)
-        #     if device.type == 'cuda':
-        #         instance_loss_fn = instance_loss_fn.cuda()
-        # else:
         instance_loss_fn = nn.CrossEntropyLoss()
 
-        if args.model_type =='clam_sb':
-            model = CLAM_SB(**model_dict, instance_loss_fn=instance_loss_fn)
-            # model = RRTMIL()
-        elif args.model_type == 'clam_mb':
-            model = CLAM_MB(**model_dict, instance_loss_fn=instance_loss_fn)
-        elif args.model_type == 'hit':
-            model = HIT(n_classes=args.n_classes)
-            # model = TransMIL()
-        elif args.model_type == 'transmil':
-            model = TransMIL(n_classes=args.n_classes)
-            # model = RRTMIL()
-        elif args.model_type == 'dsmil':
-            # i_classifier = FCLayer(in_size=512, out_size=model_dict['n_classes'])
-            # b_classifier = BClassifier(input_size=512, output_class=model_dict['n_classes'], dropout_v=0.0)
-            model = MILNet(n_classes=args.n_classes)
-        # elif args.model_type == 'mamba':
-        #     model = VSSM(**model_dict)
-        elif args.model_type == 'dtfdmil':
-            model = DTFD_MIL(n_classes=args.n_classes)
-        # elif args.model_type == 's4':
-        #     model = S4Model(n_classes=args.n_classes)
-        elif args.model_type == 'abmil':
+        if args.model_type == 'abmil':
             model = DAttention(n_classes=args.n_classes)
         elif args.model_type == 'hypermil':
             model = HyperMIL(n_classes=args.n_classes, task=args.task, fold=cur, exp_code=args.exp_code, n_ctx=args.len_learnable_prompt, base_mil=args.base_mil, slide_align=args.slide_align)
-        elif args.model_type == 'catemil':
-            model = CATEMIL(n_classes=args.n_classes, task=args.task, fold=cur, exp_code=args.exp_code, n_ctx=args.len_learnable_prompt, base_mil=args.base_mil, slide_align=args.slide_align)
-        elif args.model_type == 'catemil_pathgenclip':
-            model = CATEMIL_PathGenClip(n_classes=args.n_classes, task=args.task, fold=cur, exp_code=args.exp_code, n_ctx=args.len_learnable_prompt, base_mil=args.base_mil, slide_align=args.slide_align)
-        elif args.model_type == 'ilra':
-            model = ILRA(n_classes=args.n_classes)
-        # elif args.model_type == 'wikg':
-        #     model = WiKG(n_classes=args.n_classes)
-        elif args.model_type == 'acmil':
-            model = ACMIL_GA(n_classes=args.n_classes)
-        
-        # elif args.model_type == 'catemilv2':
-        #     model = CATEMILv2(n_classes=args.n_classes, task=args.task)
-        elif args.model_type == 'catemil_quilt':
-            model = CATEMIL_Quilt(n_classes=args.n_classes, task=args.task, fold=cur, exp_code=args.exp_code, n_ctx=args.len_learnable_prompt, base_mil=args.base_mil, slide_align=args.slide_align)
-        # elif args.model_type == 'catemil_plip':
-        #     model = CATEMIL_PLIP(n_classes=args.n_classes, task=args.task, fold=cur, exp_code=args.exp_code)
-            # model = RRTMIL(n_classes=args.n_classes)
-        # elif args.model_type == 'rrt':
-        #     model = RRTMIL(n_classes=args.n_classes,epeg_k=13,crmsa_k=3)
         else:
             raise NotImplementedError
-
-        # model.half()
-
-
-    elif 'hipt' in args.model_type:
-        if args.model_type == 'hipt_n':
-            model = HIPT_None_FC(**model_dict)
-        elif args.model_type == 'hipt_lgp':
-            model = HIPT_LGP_FC(**model_dict, freeze_4k=True, pretrain_4k='vit4k_xs_dino', freeze_WSI=True, pretrain_WSI='None')
-
     else: # args.model_type == 'mil'
         if args.n_classes > 2:
             model = MIL_fc_mc(**model_dict)
@@ -316,7 +229,7 @@ def train(datasets, cur, args):
         if args.model_type in ['clam_sb', 'clam_mb'] and not args.no_inst_cluster:     
             train_loop_clam(epoch, model, train_loader, optimizer, args.n_classes, args.bag_weight, writer, loss_fn)
             stop = validate_clam(cur, epoch, model, val_loader, args.n_classes, early_stopping, writer, loss_fn, args.results_dir)
-        elif args.model_type in ['hit', 'dsmil', 'hipt_lgp', 'hipt_n', 'mamba', 'transmil', 'dtfdmil', 's4', 'abmil', 'rrt', 'hypermil','catemil', 'catemilv2', 'catemil_quilt', 'catemil_plip', 'catemil_pathgenclip', 'ilra', 'wikg', 'acmil'] and not args.no_inst_cluster:
+        elif args.model_type in ['abmil','hypermil'] and not args.no_inst_cluster:
 
             if  pretrain_epoch != 0 and epoch < pretrain_epoch:
                 print('Pretraining ...')
@@ -366,12 +279,7 @@ def train(datasets, cur, args):
         
     if args.early_stopping:
         model.load_state_dict(torch.load(os.path.join(args.results_dir, "s_{}_checkpoint.pt".format(cur))))
-        # ckpt = torch.load(os.path.join(args.results_dir, "s_{}_checkpoint.pt".format(cur)), map_location='cpu')
-        # model.load_state_dict(ckpt, strict=False)
     else:
-        # exclude self.text_encoder if it exists
-        # if hasattr(model, 'text_encoder'): #!!
-        #     delattr(model, 'text_encoder') #!!
         torch.save(model.state_dict(), os.path.join(args.results_dir, "s_{}_checkpoint.pt".format(cur)))
     
     if args.model_type in ['hit', 'dsmil', 'hipt_lgp', 'hipt_n', 'mamba', 'transmil', 'dtfdmil', 's4', 'abmil', 'rrt', 'hypermil','catemil', 'catemilv2', 'catemil_quilt', 'catemil_plip', 'catemil_pathgenclip', 'ilra', 'wikg', 'acmil']:
@@ -436,7 +344,7 @@ def train_loop_clam(epoch, model, loader, optimizer, n_classes, bag_weight, writ
     print('\n')
     for batch_idx, (data, data2, label, slide_id, coords) in enumerate(loader):
         data, label = data.to(device), label.to(device)
-        # import ipdb;ipdb.set_trace()
+
         logits, Y_hat, Y_prob, instance_dict = model(data, label=label, instance_eval=True)
 
         acc_logger.log(Y_hat, label)
@@ -448,18 +356,8 @@ def train_loop_clam(epoch, model, loader, optimizer, n_classes, bag_weight, writ
         instance_loss_value = instance_loss.item()
         train_inst_loss += instance_loss_value
 
-        # infonce_loss = instance_dict['infonce_loss']
-        # infonce_loss_value = infonce_loss.item()
-        # train_infonce_loss += infonce_loss_value
-
-        # kl_loss = instance_dict['kl_loss']
-        # kl_loss_value = kl_loss.item()
-        # train_kl_loss += kl_loss_value
-
-        # import ipdb;ipdb.set_trace()
-        total_loss = bag_weight * loss + (1-bag_weight) * instance_loss# + 7 * infonce_loss + 7 * kl_loss
-        # total_loss = loss + 0.1 * infonce_loss
-
+        total_loss = bag_weight * loss + (1-bag_weight) * instance_loss
+     
         if 'infonce_loss' in instance_dict.keys() and instance_dict['infonce_loss'] is not None:
             infonce_loss = instance_dict['infonce_loss']
             infonce_loss_value = infonce_loss.item()
@@ -479,9 +377,6 @@ def train_loop_clam(epoch, model, loader, optimizer, n_classes, bag_weight, writ
         inst_logger.log_batch(inst_preds, inst_labels)
 
         train_loss += loss_value
-        # if (batch_idx + 1) % 20 == 0:
-        #     print('batch {}, loss: {:.4f}, instance_loss: {:.4f}, weighted_loss: {:.4f}, '.format(batch_idx, loss_value, instance_loss_value, total_loss.item()) + 
-        #         'label: {}, bag_size: {}'.format(label.item(), data.size(0)))
 
         error = calculate_error(Y_hat, label)
         train_error += error
@@ -496,13 +391,6 @@ def train_loop_clam(epoch, model, loader, optimizer, n_classes, bag_weight, writ
     train_loss /= len(loader)
     train_error /= len(loader)
     
-    # if inst_count > 0:
-    #     train_inst_loss /= inst_count
-    #     print('\n')
-    #     for i in range(2):
-    #         acc, correct, count = inst_logger.get_summary(i)
-    #         print('class {} clustering acc {}: correct {}/{}'.format(i, acc, correct, count))
-    # print(f'Epoch: {epoch}, train_loss: {train_loss:.4f}, train_clustering_loss:  {train_inst_loss:.4f}, train_error: {train_error:.4f}, train_infonce_loss: {train_infonce_loss:.4f}')
     print(f'Epoch: {epoch}, train_loss: {train_loss:.4f}, train_clustering_loss:  {train_inst_loss:.4f}, train_error: {train_error:.4f}, train_infonce_loss: {train_infonce_loss:.4f}, train_kl_loss: {train_kl_loss:.4f}')
     acc_list = []
     correct_list = []
@@ -525,16 +413,9 @@ def train_loop_clam(epoch, model, loader, optimizer, n_classes, bag_weight, writ
 
 def train_loop_hit(epoch, model, loader, optimizer, n_classes, bag_weight, writer=None, loss_fn=None, model_type=None, base_mil=None, pretrain=False, args=None):
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # model.train()
+   
     model.train()
-    # if pretrain == False:
-    #     for param in model.encoder_IB.parameters():
-    #         param.requires_grad = False
-    # club.train()
-    # if pretrain == False:
-    #     for name, param in model.named_parameters():
-    #         if 'reembedding' in name:
-    #             param.requires_grad = False
+
     acc_logger = Accuracy_Logger(n_classes=n_classes)
     
     train_loss = 0.
@@ -555,29 +436,19 @@ def train_loop_hit(epoch, model, loader, optimizer, n_classes, bag_weight, write
     train_loglikeli = 0.
 
     print('\n')
-    # for batch_idx, (data, label) in enumerate(loader):
-    # pbar = tqdm(total=len(loader))
-    # import ipdb;ipdb.set_trace()
-    # num_sam = []
     for batch_idx, (data, data2, label, slide_id, coords) in enumerate(loader):
         data, data2, label = data.to(device, non_blocking=True), data2.to(device, non_blocking=True), label.to(device, non_blocking=True)
         if type(coords) == torch.Tensor:
             coords = coords.to(device, non_blocking=True)
-        # data, data2, label = data.half(), data2.half(), label.half()
-        # nan to 0
+      
         data[data != data] = 0
-        # if model_type != 'dtfdmil':
-        # import ipdb;ipdb.set_trace()
+   
         if type(coords) == torch.Tensor:
             logits0, Y_hat, Y_prob, results_dict = model(data, data2, label, pretrain=pretrain, coords = coords)
         else:
             logits0, Y_hat, Y_prob, results_dict = model(data, data2, label, pretrain=pretrain)
 
         acc_logger.log(Y_hat, label)
-        # import ipdb;ipdb.set_trace()
-        # loss = loss_fn(logits0, label)
-        # # loss2 = loss_fn(logits_pre, label)
-        # loss_value = loss.item()
 
         if 'infonce_loss' in results_dict.keys() and results_dict['infonce_loss'] is not None:
             infonce_loss = results_dict['infonce_loss']
@@ -638,7 +509,7 @@ def train_loop_hit(epoch, model, loader, optimizer, n_classes, bag_weight, write
             train_exclusion_loss += exclusion_loss_value
         else:
             exclusion_loss = 0
-        # total_loss = loss
+      
         if pretrain:
             total_loss = args.w_infonce * infonce_loss + args.w_kl * kl_loss
             # total_loss = infonce_loss
@@ -653,15 +524,11 @@ def train_loop_hit(epoch, model, loader, optimizer, n_classes, bag_weight, write
                 optimizer[1].step()
                 optimizer[1].zero_grad()
         else:
-            # total_loss = loss
-            # import ipdb;ipdb.set_trace()
-            if model_type in ['hypermil','catemil', 'catemilv2', 'catemil_quilt', 'catemil_plip', 'catemil_pathgenclip']:
+            if model_type in ['hypermil']:
                 if base_mil != 'dtfdmil':
                     loss = loss_fn(logits0, label)
                     loss_value = loss.item()
                     total_loss = contrastive_loss + entailment_loss + exclusion_loss + position_loss + angle_loss + loss
-                    # total_loss = loss + args.w_infonce * infonce_loss + args.w_kl * kl_loss
-                    # total_loss = loss + 8 * infonce_loss + 8 * kl_loss
                     train_loss += loss_value
                     error = calculate_error(Y_hat, label)
                     train_error += error
@@ -678,9 +545,6 @@ def train_loop_hit(epoch, model, loader, optimizer, n_classes, bag_weight, write
                     torch.nn.utils.clip_grad_norm_(model.mil.dimReduction.parameters(), 5)
                     torch.nn.utils.clip_grad_norm_(model.mil.attention.parameters(), 5)
                     torch.nn.utils.clip_grad_norm_(model.mil.classifier.parameters(), 5)
-                    # torch.nn.utils.clip_grad_norm_(model.encoder_IB.parameters(), 5)
-                    # torch.nn.utils.clip_grad_norm_(model.prompt_learner_local.parameters(), 5)
-                    # torch.nn.utils.clip_grad_norm_(model.prompt_learner_global.parameters(), 5)
 
                     loss1 = loss_fn(logits0, label).mean() + args.w_infonce * infonce_loss + args.w_kl * kl_loss
                     optimizer[1].zero_grad()
@@ -690,8 +554,7 @@ def train_loop_hit(epoch, model, loader, optimizer, n_classes, bag_weight, write
                     torch.nn.utils.clip_grad_norm_(model.encoder_IB.parameters(), 5)
                     torch.nn.utils.clip_grad_norm_(model.prompt_learner_local.parameters(), 5)
                     torch.nn.utils.clip_grad_norm_(model.prompt_learner_global.parameters(), 5)
-                    # torch.nn.utils.clip_grad_norm_(model.tokenized_prompts_local.parameters(), 5)
-                    # torch.nn.utils.clip_grad_norm_(model.tokenized_prompts_global.parameters(), 5)
+            
                     optimizer[0].step()
                     optimizer[1].step()
 
@@ -735,12 +598,6 @@ def train_loop_hit(epoch, model, loader, optimizer, n_classes, bag_weight, write
                 optimizer.step()
                 optimizer.zero_grad()
 
-    # calculate loss and error for epoch
-    # train_loss /= len(loader)
-    # train_loss2 /= len(loader)
-    # train_error /= len(loader)
-    
-    # print(f'Epoch: {epoch}, train_loss: {train_loss:.4f}, train_loss2:  {train_loss2:.4f}, train_error: {train_error:.4f}, train_infonce_loss: {train_infonce_loss:.4f}, train_kl_loss: {train_kl_loss:.4f}, train_op_loss: {train_op_loss:.4f}, train_mi: {train_mi:.4f}, train_loglikeli: {train_loglikeli:.4f}')
     print(f'Epoch: {epoch}, train_loss: {train_loss:.4f}, train_loss2:  {train_loss2:.4f}, train_error: {train_error:.4f}, train_contrastive_loss: {train_contrastive_loss:.4f}, train_entailment_loss: {train_entailment_loss:.4f}, train_exclusion_loss: {train_exclusion_loss:.4f}, train_position_loss: {train_position_loss:.4f}, train_angle_loss: {train_angle_loss:.4f}')
     acc_list = []
     correct_list = []
@@ -755,14 +612,7 @@ def train_loop_hit(epoch, model, loader, optimizer, n_classes, bag_weight, write
             writer.add_scalar('train/class_{}_acc'.format(i), acc, epoch)
     print('Overall: acc {:.4f}, correct {}/{}'.format(np.sum(acc_list)/2, np.sum(correct_list), np.sum(count_list)))
 
-    # wandb.log({"train/loss": train_loss, "train/infonce_loss": train_infonce_loss, "train/kl_loss": train_kl_loss, "train/op_loss": train_op_loss, "train/acc": np.sum(acc_list)/2})
-
-    # if writer:
-    #     writer.add_scalar('train/loss', train_loss, epoch)
-    #     writer.add_scalar('train/error', train_error, epoch)
-
-
-
+ 
 def train_loop(epoch, model, loader, optimizer, n_classes, writer = None, loss_fn = None):   
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu") 
     model.train()
@@ -928,12 +778,7 @@ def validate_clam(cur, epoch, model, loader, n_classes, early_stopping = None, w
         auc = np.nanmean(np.array(aucs))
 
     print('\nVal Set, val_loss: {:.4f}, val_error: {:.4f}, auc: {:.4f}'.format(val_loss, val_error, auc))
-    # if inst_count > 0:
-    #     val_inst_loss /= inst_count
-    #     for i in range(2):
-    #         acc, correct, count = inst_logger.get_summary(i)
-    #         print('class {} clustering acc {}: correct {}/{}'.format(i, acc, correct, count))
-    
+ 
     if writer:
         writer.add_scalar('val/loss', val_loss, epoch)
         writer.add_scalar('val/auc', auc, epoch)
@@ -1014,17 +859,7 @@ def validate_hit(cur, epoch, model, loader, n_classes, early_stopping = None, wr
         auc = np.nanmean(np.array(aucs))
 
     print('\nVal Set, val_loss: {:.4f}, val_error: {:.4f}, auc: {:.4f}'.format(val_loss, val_error, auc))
-    # if inst_count > 0:
-    #     val_inst_loss /= inst_count
-    #     for i in range(2):
-    #         acc, correct, count = inst_logger.get_summary(i)
-    #         print('class {} clustering acc {}: correct {}/{}'.format(i, acc, correct, count))
-    
-    # if writer:
-    #     writer.add_scalar('val/loss', val_loss, epoch)
-    #     writer.add_scalar('val/auc', auc, epoch)
-    #     writer.add_scalar('val/error', val_error, epoch)
-
+   
     acc_list = []
     correct_list = []
     count_list = []
@@ -1039,9 +874,6 @@ def validate_hit(cur, epoch, model, loader, n_classes, early_stopping = None, wr
             writer.add_scalar('val/class_{}_acc'.format(i), acc, epoch)
     print('Overall: acc {:.4f}, correct {}/{}'.format(np.sum(acc_list)/2, np.sum(correct_list), np.sum(count_list)))
 
-    # wandb.log({"val/loss": val_loss, "val/auc": auc, "val/acc": 1-val_error})
-     
-    # import ipdb;ipdb.set_trace()
     if early_stopping:
         assert results_dir
         early_stopping(epoch, val_loss, model, ckpt_name = os.path.join(results_dir, "s_{}_checkpoint.pt".format(cur)))
@@ -1056,10 +888,7 @@ def summary_my(model, loader, n_classes):
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
     acc_logger = Accuracy_Logger(n_classes=n_classes)
     model.eval()
-    # club = model[1]
-    # model = model[0]
-    # model.eval()
-    # club.eval()
+
     test_loss = 0.
     test_error = 0.
 

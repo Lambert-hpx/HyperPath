@@ -28,4 +28,4 @@ If you find this work useful in your research, please consider citing:
 
 ## Acknowledgement
 
-We would like to thank the authors of [CONCH](https://github.com/mahmoodlab/CONCH), [CLAM](https://github.com/mahmoodlab/CLAM) and [MERU](https://github.com/facebookresearch/meru) for their excellent work.
+We would like to thank the authors of [CATE](https://github.com/HKU-MedAI/CATE), [FLEX](https://github.com/HKU-MedAI/FLEX), [CONCH](https://github.com/mahmoodlab/CONCH), [CLAM](https://github.com/mahmoodlab/CLAM) and [MERU](https://github.com/facebookresearch/meru) for their excellent work.

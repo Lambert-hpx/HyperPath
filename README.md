@@ -6,7 +6,18 @@ This is the official code for the paper "HyperPath: Knowledge-Guided Hyperbolic 
 
 ## Citation
 
-If you find this work useful in your research, please consider citing.
+If you find this work useful in your research, please consider citing:
+```
+@misc{huang2025hyperpathknowledgeguidedhyperbolicsemantic,
+      title={HyperPath: Knowledge-Guided Hyperbolic Semantic Hierarchy Modeling for WSI Analysis}, 
+      author={Peixiang Huang and Yanyan Huang and Weiqin Zhao and Junjun He and Lequan Yu},
+      year={2025},
+      eprint={2506.16398},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2506.16398}, 
+}
+```
 
 ## Acknowledgement
 
